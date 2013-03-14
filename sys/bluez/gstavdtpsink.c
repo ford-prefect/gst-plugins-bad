@@ -151,8 +151,6 @@ gst_avdtp_sink_set_property (GObject * object, guint prop_id,
 
   switch (prop_id) {
     case PROP_DEVICE:
-      if (sink->device)
-        g_free (sink->device);
       gst_avdtp_connection_set_device (&sink->conn, g_value_get_string (value));
       break;
 
@@ -161,8 +159,6 @@ gst_avdtp_sink_set_property (GObject * object, guint prop_id,
       break;
 
     case PROP_TRANSPORT:
-      if (sink->transport)
-        g_free (sink->transport);
       gst_avdtp_connection_set_transport (&sink->conn,
           g_value_get_string (value));
       break;
@@ -328,11 +324,8 @@ gst_avdtp_sink_render (GstBaseSink * basesink, GstBuffer * buffer)
   ssize_t ret;
   int fd;
 
-  if (!gst_buffer_map (buffer, &map, GST_MAP_READ))
-    return GST_FLOW_ERROR;
-
   /* FIXME: temporary sanity check */
-  g_assert (!(g_io_channel_get_flags (self->stream) & G_IO_FLAG_NONBLOCK));
+  g_assert (!(g_io_channel_get_flags (self->conn.stream) & G_IO_FLAG_NONBLOCK));
 
   /* FIXME: why not use g_io_channel_write_chars() instead? */
   fd = g_io_channel_unix_get_fd (self->conn.stream);

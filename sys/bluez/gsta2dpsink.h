@@ -56,16 +56,16 @@ struct _GstA2dpSink
   gboolean autoconnect;
   gboolean sink_is_in_bin;
 
-  GstPad *ghostpad;
-  GstPadQueryFunction ghostpad_queryfunc;
+  GstGhostPad *ghostpad;
+  GstPadSetCapsFunction ghostpad_setcapsfunc;
   GstPadEventFunction ghostpad_eventfunc;
 
-  GstEvent *segment_event;
+  GstEvent *newseg_event;
   /* Store the tags received before the a2dpsender sink is created
    * when it is created we forward this to it */
   GstTagList *taglist;
 
-  GMutex cb_mutex;
+  GMutex *cb_mutex;
 };
 
 struct _GstA2dpSinkClass
