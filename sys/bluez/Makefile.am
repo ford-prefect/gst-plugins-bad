@@ -12,8 +12,8 @@ libgstbluez_la_CFLAGS = $(GST_PLUGINS_BAD_CFLAGS) \
 	$(DBUS_CFLAGS)
 libgstbluez_la_LIBADD = \
 	$(GST_PLUGINS_BASE_LIBS) \
-	-lgstaudio-$(GST_API_VERSION) \
-	-lgstrtp-$(GST_API_VERSION) \
+	-lgstaudio-$(GST_MAJORMINOR) \
+	-lgstrtp-$(GST_MAJORMINOR) \
 	$(GST_BASE_LIBS) \
 	$(GST_LIBS) \
 	$(DBUS_LIBS)
