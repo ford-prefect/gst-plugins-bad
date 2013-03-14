@@ -41,10 +41,8 @@
 
 #include <dbus/dbus.h>
 
-#include "rtp.h"
 #include "a2dp-codecs.h"
 
-#include "gstpragma.h"
 #include "gstavdtpsink.h"
 
 GST_DEBUG_CATEGORY_STATIC (avdtp_sink_debug);
