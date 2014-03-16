@@ -61,9 +61,6 @@ static GstStaticPadTemplate src_template = GST_STATIC_PAD_TEMPLATE ("src",
     GST_PAD_ALWAYS,
     GST_STATIC_CAPS_ANY);
 
-#define gst_peerflix_src_parent_class parent_class
-G_DEFINE_TYPE (GstPeerflixSrc, gst_peerflix_src, GST_TYPE_BIN);
-
 static void gst_peerflix_src_set_property (GObject * object, guint prop_id,
     const GValue * value, GParamSpec * spec);
 static void gst_peerflix_src_get_property (GObject * object, guint prop_id,
@@ -71,6 +68,13 @@ static void gst_peerflix_src_get_property (GObject * object, guint prop_id,
 static void gst_peerflix_src_reset (GstPeerflixSrc * src);
 static GstStateChangeReturn
 gst_peerflix_src_change_state (GstElement * element, GstStateChange trans);
+static void
+gst_peerflix_src_uri_handler_init (gpointer g_iface, gpointer iface_data);
+
+#define gst_peerflix_src_parent_class parent_class
+G_DEFINE_TYPE_WITH_CODE (GstPeerflixSrc, gst_peerflix_src, GST_TYPE_BIN,
+    G_IMPLEMENT_INTERFACE (GST_TYPE_URI_HANDLER,
+        gst_peerflix_src_uri_handler_init));
 
 static void
 gst_peerflix_src_dispose (GObject * object)
@@ -85,6 +89,7 @@ gst_peerflix_src_finalize (GObject * object)
 {
   GstPeerflixSrc *src = GST_PEERFLIX_SRC_CAST (object);
 
+  g_free (src->uri);
   g_free (src->location);
 
   G_OBJECT_CLASS (parent_class)->finalize ((GObject *) src);
@@ -144,6 +149,7 @@ gst_peerflix_src_init (GstPeerflixSrc * src)
   src->peerflix_path = g_strdup (DEFAULT_PEERFLIX_PATH);
   src->port = DEFAULT_PORT;
 
+  src->uri = NULL;
   src->location = NULL;
   src->started = FALSE;
 }
@@ -361,4 +367,72 @@ gst_peerflix_src_plugin_init (GstPlugin * plugin)
       "PeerflixSrc");
   return gst_element_register (plugin, "peerflixsrc", GST_RANK_NONE,
       gst_peerflix_src_get_type ());
+}
+
+/* URI handler interface */
+
+static gboolean
+gst_peerflix_src_set_uri (GstPeerflixSrc * src, const gchar * uri,
+    GError ** error)
+{
+  src->uri = g_strdup (uri);
+
+  if (!g_str_has_prefix (uri, "torrent+"))
+    goto bad_uri;
+
+  src->location = g_strdup (&uri[8]);
+  g_object_notify (G_OBJECT (src), "location");
+
+  return TRUE;
+
+bad_uri:
+  {
+    GST_ELEMENT_ERROR (src, RESOURCE, READ, (NULL),
+        ("error parsing uri %s", uri));
+    g_set_error_literal (error, GST_URI_ERROR, GST_URI_ERROR_BAD_URI,
+        "Could not parse torrent URI");
+    return FALSE;
+  }
+}
+
+static GstURIType
+gst_peerflix_src_uri_get_type (GType type)
+{
+  return GST_URI_SRC;
+}
+
+static const gchar *const *
+gst_peerflix_src_uri_get_protocols (GType type)
+{
+  static const gchar *protocols[] = { "torrent+http", "torrent+https",
+    "torrent+file", NULL
+  };
+
+  return protocols;
+}
+
+static gchar *
+gst_peerflix_src_uri_get_uri (GstURIHandler * handler)
+{
+  GstPeerflixSrc *src = GST_PEERFLIX_SRC (handler);
+
+  return g_strdup (src->uri);
+}
+
+static gboolean
+gst_peerflix_src_uri_set_uri (GstURIHandler * handler, const gchar * uri,
+    GError ** error)
+{
+  return gst_peerflix_src_set_uri (GST_PEERFLIX_SRC (handler), uri, error);
+}
+
+static void
+gst_peerflix_src_uri_handler_init (gpointer g_iface, gpointer iface_data)
+{
+  GstURIHandlerInterface *iface = (GstURIHandlerInterface *) g_iface;
+
+  iface->get_type = GST_DEBUG_FUNCPTR (gst_peerflix_src_uri_get_type);
+  iface->get_protocols = GST_DEBUG_FUNCPTR (gst_peerflix_src_uri_get_protocols);
+  iface->get_uri = GST_DEBUG_FUNCPTR (gst_peerflix_src_uri_get_uri);
+  iface->set_uri = GST_DEBUG_FUNCPTR (gst_peerflix_src_uri_set_uri);
 }

@@ -46,6 +46,7 @@ struct _GstPeerflixSrc
 
   gboolean elements_created;
 
+  gchar *uri;
   gchar *location;
   gchar *peerflix_path;
   gint port;
