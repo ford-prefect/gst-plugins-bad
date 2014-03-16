@@ -388,6 +388,12 @@ else
 WEBP_DIR=
 endif
 
+if USE_PEERFLIX
+PEERFLIX_DIR=peerflix
+else
+PEERFLIX_DIR=
+endif
+
 SUBDIRS=\
 	$(VOAACENC_DIR) \
 	$(ASSRENDER_DIR) \
@@ -433,6 +439,7 @@ SUBDIRS=\
 	$(OPENJPEG_DIR) \
 	$(OPENNI2_DIR) \
 	$(OPUS_DIR) \
+	$(PEERFLIX_DIR) \
 	$(RSVG_DIR) \
 	$(SBC_DIR) \
 	$(SCHRO_DIR) \
@@ -494,6 +501,7 @@ DIST_SUBDIRS = \
 	openni2 \
 	openjpeg \
 	opus \
+	peerflix \
 	rsvg \
 	resindvd \
 	sbc \

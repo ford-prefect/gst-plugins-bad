@@ -2226,6 +2226,10 @@ AG_GST_CHECK_FEATURE(HLS, [http live streaming plugin], hls, [
   ])
 ])
 
+dnl *** peerflix ***
+translit(dnm, m, l) AM_CONDITIONAL(USE_PEERFLIX, true)
+AG_GST_CHECK_FEATURE(PEERFLIX, [Peerflix source], peerflix, [true])
+
 else
 
 dnl not building plugins with external dependencies,
@@ -2278,6 +2282,7 @@ AM_CONDITIONAL(USE_OPENEXR, false)
 AM_CONDITIONAL(USE_OPENJPEG, false)
 AM_CONDITIONAL(USE_OPENNI2, false)
 AM_CONDITIONAL(USE_OPUS, false)
+AM_CONDITIONAL(USE_PEERFLIX, false)
 AM_CONDITIONAL(USE_PVR, false)
 AM_CONDITIONAL(USE_RSVG, false)
 AM_CONDITIONAL(USE_EGLGLES, false)
@@ -2548,6 +2553,7 @@ ext/openexr/Makefile
 ext/openjpeg/Makefile
 ext/openni2/Makefile
 ext/opus/Makefile
+ext/peerflix/Makefile
 ext/rsvg/Makefile
 ext/resindvd/Makefile
 ext/rtmp/Makefile
