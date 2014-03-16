@@ -35,7 +35,12 @@
 #endif
 
 #include <unistd.h>
+#include <string.h>
 #include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <sys/stat.h>
+
 #include <signal.h>
 
 #include <gst/pbutils/missing-plugins.h>
@@ -54,7 +59,7 @@ enum
 };
 
 #define DEFAULT_PEERFLIX_PATH "peerflix"
-#define DEFAULT_PORT 10000
+#define DEFAULT_PORT 0
 
 static GstStaticPadTemplate src_template = GST_STATIC_PAD_TEMPLATE ("src",
     GST_PAD_SRC,
@@ -181,6 +186,47 @@ read_stream_url (GstPeerflixSrc * src, int outfd)
   return ret;
 }
 
+static int
+get_port (void)
+{
+  int sock;
+  struct sockaddr_in addr;
+  int reuse;
+  socklen_t len;
+
+  sock = socket (PF_INET, SOCK_STREAM, 0);
+  if (sock < 0) {
+    return -1;
+  }
+
+  memset (&addr, 0, sizeof (addr));
+  addr.sin_port = 0;
+  addr.sin_addr.s_addr = INADDR_ANY;
+  addr.sin_family = AF_INET;
+
+  reuse = 1;
+  setsockopt (sock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof (reuse));
+  if (bind (sock, (struct sockaddr *) &addr, sizeof (addr)) == -1) {
+    close (sock);
+    return -1;
+  }
+
+  len = sizeof (addr);
+  if (getsockname (sock, (struct sockaddr *) &addr, &len) == -1) {
+    close (sock);
+    return -1;
+  }
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__APPLE__) || defined(__OpenBSD__)
+  /* XXX This exposes a potential race condition, but without this,
+   * httpd will not start on the above listed platforms due to the fact
+   * that SO_REUSEADDR is also needed when Apache binds to the listening
+   * socket.  At this time, Apache does not support that socket option.
+   */
+  close (sock);
+#endif
+  return ntohs (addr.sin_port);
+}
+
 static gboolean
 gst_peerflix_src_start_peerflix (GstPeerflixSrc * src)
 {
@@ -194,7 +240,11 @@ gst_peerflix_src_start_peerflix (GstPeerflixSrc * src)
 
   g_assert (!src->started);
 
-  argv[3] = str = g_strdup_printf ("%d", src->port);
+  if (src->port > 0)
+    argv[3] = str = g_strdup_printf ("%d", src->port);
+  else
+    argv[3] = str = g_strdup_printf ("%d", get_port ());
+
   argv[5] = str2 =
       g_build_filename (g_get_user_cache_dir (), "gstreamer-" GST_API_VERSION,
       "peerflix", NULL);
