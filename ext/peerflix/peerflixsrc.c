@@ -160,13 +160,11 @@ read_stream_url (GstPeerflixSrc * src, int outfd)
   GIOChannel *iochannel;
   gchar *str, *ret;
   gsize len;
-  GError *err = NULL;
 
   iochannel = g_io_channel_unix_new (outfd);
-  if (g_io_channel_read_line (iochannel, &str, &len, NULL, &err) !=
+  if (g_io_channel_read_line (iochannel, &str, &len, NULL, NULL) !=
       G_IO_STATUS_NORMAL) {
-    GST_ERROR_OBJECT (src, "Could not get stream URL: %s", err->message);
-    g_error_free (err);
+    GST_ERROR_OBJECT (src, "Could not get stream URL");
     return NULL;
   }
 
