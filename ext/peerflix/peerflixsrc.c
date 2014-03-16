@@ -189,7 +189,7 @@ gst_peerflix_src_start_peerflix (GstPeerflixSrc * src)
   gint outfd;
   gchar *str;
   gchar *argv[] = { src->peerflix_path, src->location, (gchar *) "-p", NULL,
-    (gchar *) "-q", (gchar *) "-1", NULL
+    (gchar *) "-q", NULL
   };
   GError *err = NULL;
 
