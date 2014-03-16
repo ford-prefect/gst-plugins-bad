@@ -186,22 +186,28 @@ gst_peerflix_src_start_peerflix (GstPeerflixSrc * src)
 {
   gint outfd;
   gchar *str;
+  gchar *str2;
   gchar *argv[] = { src->peerflix_path, src->location, (gchar *) "-p", NULL,
-    (gchar *) "-q", NULL
+    (gchar *) "-q", (gchar *) "--path", NULL, NULL
   };
   GError *err = NULL;
 
   g_assert (!src->started);
 
   argv[3] = str = g_strdup_printf ("%d", src->port);
+  argv[5] = str2 =
+      g_build_filename (g_get_user_cache_dir (), "gstreamer-" GST_API_VERSION,
+      "peerflix", NULL);
   if (!g_spawn_async_with_pipes (NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL,
           NULL, &src->child_pid, NULL, &outfd, NULL, &err)) {
     GST_ERROR_OBJECT (src, "Could not start peerflix: %s", err->message);
     g_free (str);
+    g_free (str2);
     g_error_free (err);
     return FALSE;
   }
   g_free (str);
+  g_free (str2);
 
   /* Point souphttpsrc to the HTTP stream peerflix gives us */
   str = read_stream_url (src, outfd);
