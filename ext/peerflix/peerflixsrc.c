@@ -216,14 +216,6 @@ get_port (void)
     close (sock);
     return -1;
   }
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__APPLE__) || defined(__OpenBSD__)
-  /* XXX This exposes a potential race condition, but without this,
-   * httpd will not start on the above listed platforms due to the fact
-   * that SO_REUSEADDR is also needed when Apache binds to the listening
-   * socket.  At this time, Apache does not support that socket option.
-   */
-  close (sock);
-#endif
   return ntohs (addr.sin_port);
 }
 
