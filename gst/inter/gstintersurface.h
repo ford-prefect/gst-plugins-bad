@@ -45,8 +45,14 @@ struct _GstInterSurface
   guint64 audio_latency_time;
   guint64 audio_period_time;
 
+  /* app */
+  GCond app_caps_cond;
+  GCond app_buffer_cond;
+  GstCaps *app_caps;
+
   GstBuffer *video_buffer;
   GstBuffer *sub_buffer;
+  GstBuffer *app_buffer;
   GstAdapter *audio_adapter;
 };
 

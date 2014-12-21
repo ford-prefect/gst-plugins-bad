@@ -9,6 +9,8 @@ libgstinter_la_SOURCES = \
 	gstintersubsrc.c \
 	gstintervideosink.c \
 	gstintervideosrc.c \
+	gstinterappsink.c \
+	gstinterappsrc.c \
 	gstinter.c \
 	gstintersurface.c
 
@@ -19,6 +21,8 @@ noinst_HEADERS = \
 	gstintersubsrc.h \
 	gstintervideosink.h \
 	gstintervideosrc.h \
+	gstinterappsink.h \
+	gstinterappsrc.h \
 	gstintersurface.h
 
 libgstinter_la_CFLAGS = \

@@ -27,6 +27,8 @@
 #include "gstintersubsink.h"
 #include "gstintervideosrc.h"
 #include "gstintervideosink.h"
+#include "gstinterappsrc.h"
+#include "gstinterappsink.h"
 #include "gstintersurface.h"
 
 static gboolean
@@ -44,6 +46,10 @@ plugin_init (GstPlugin * plugin)
       GST_TYPE_INTER_VIDEO_SRC);
   gst_element_register (plugin, "intervideosink", GST_RANK_NONE,
       GST_TYPE_INTER_VIDEO_SINK);
+  gst_element_register (plugin, "interappsrc", GST_RANK_NONE,
+      GST_TYPE_INTER_APP_SRC);
+  gst_element_register (plugin, "interappsink", GST_RANK_NONE,
+      GST_TYPE_INTER_APP_SINK);
 
   return TRUE;
 }

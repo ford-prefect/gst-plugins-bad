@@ -48,6 +48,8 @@ gst_inter_surface_get (const char *name)
   surface->ref_count = 1;
   surface->name = g_strdup (name);
   g_mutex_init (&surface->mutex);
+  g_cond_init (&surface->app_caps_cond);
+  g_cond_init (&surface->app_buffer_cond);
   surface->audio_adapter = gst_adapter_new ();
   surface->audio_buffer_time = DEFAULT_AUDIO_BUFFER_TIME;
   surface->audio_latency_time = DEFAULT_AUDIO_LATENCY_TIME;
@@ -78,8 +80,11 @@ gst_inter_surface_unref (GstInterSurface * surface)
     }
 
     g_mutex_clear (&surface->mutex);
+    g_cond_clear (&surface->app_caps_cond);
+    g_cond_clear (&surface->app_buffer_cond);
     gst_buffer_replace (&surface->video_buffer, NULL);
     gst_buffer_replace (&surface->sub_buffer, NULL);
+    gst_buffer_replace (&surface->app_buffer, NULL);
     gst_object_unref (surface->audio_adapter);
     g_free (surface->name);
     g_free (surface);

@@ -63,9 +63,12 @@ static gboolean onesecond_timer (gpointer priv);
 
 
 gboolean verbose;
+gboolean compressed;
 
 static GOptionEntry entries[] = {
   {"verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose, "Be verbose", NULL},
+  {"compressed", 'c', 0, G_OPTION_ARG_NONE, &compressed, "Use compressed data",
+      NULL},
 
   {NULL}
 
@@ -190,10 +193,21 @@ gst_inter_test_create_pipeline_vts (GstInterTest * intertest)
   g_string_append (pipe_desc,
       "video/x-raw,format=(string)I420,width=320,height=240 ! ");
   g_string_append (pipe_desc, "timeoverlay ! ");
-  g_string_append (pipe_desc, "intervideosink name=sink sync=true ");
+  if (!compressed) {
+    g_string_append (pipe_desc, "intervideosink name=sink sync=true ");
+  } else {
+    g_string_append (pipe_desc, "vp8enc deadline=15000 ! ");
+    g_string_append (pipe_desc,
+        "interappsink channel=video name=sink sync=true ");
+  }
   g_string_append (pipe_desc,
       "audiotestsrc samplesperbuffer=1600 num-buffers=100 ! audioconvert ! ");
-  g_string_append (pipe_desc, "interaudiosink sync=true ");
+  if (!compressed) {
+    g_string_append (pipe_desc, "interaudiosink sync=true ");
+  } else {
+    g_string_append (pipe_desc, "opusenc bandwidth=fullband ! ");
+    g_string_append (pipe_desc, "interappsink channel=audio sync=true ");
+  }
 
   if (verbose)
     g_print ("pipeline: %s\n", pipe_desc->str);
@@ -227,9 +241,20 @@ gst_inter_test_create_pipeline_server (GstInterTest * intertest)
 
   pipe_desc = g_string_new ("");
 
-  g_string_append (pipe_desc, "intervideosrc ! queue ! ");
+  if (!compressed)
+    g_string_append (pipe_desc, "intervideosrc ! queue ! ");
+  else {
+    g_string_append (pipe_desc,
+        "interappsrc channel=video ! queue ! vp8dec ! videoconvert ! ");
+  }
   g_string_append (pipe_desc, "xvimagesink name=sink ");
-  g_string_append (pipe_desc, "interaudiosrc ! queue ! ");
+
+  if (!compressed)
+    g_string_append (pipe_desc, "interaudiosrc ! queue ! ");
+  else {
+    g_string_append (pipe_desc,
+        "interappsrc channel=audio ! queue ! opusdec ! audioconvert ! ");
+  }
   g_string_append (pipe_desc, "alsasink ");
 
   if (verbose)
