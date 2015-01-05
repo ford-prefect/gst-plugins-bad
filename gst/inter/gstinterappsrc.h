@@ -40,8 +40,6 @@ struct _GstInterAppSrc
 
   GstInterSurface *surface;
   char *channel;
-
-  gboolean got_caps;
 };
 
 struct _GstInterAppSrcClass
