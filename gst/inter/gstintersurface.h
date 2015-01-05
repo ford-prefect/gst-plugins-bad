@@ -26,6 +26,31 @@
 
 G_BEGIN_DECLS
 
+typedef struct _GstDeferredClient GstDeferredClient;
+
+struct _GstDeferredClient
+{
+  GMutex mutex;
+
+  GstCaps *caps;
+  gboolean caps_changed;
+
+  GstBuffer *buffer;
+
+  GCond caps_cond;
+  GCond buffer_cond;
+};
+
+void gst_deferred_client_init (GstDeferredClient * client);
+void gst_deferred_client_reset (GstDeferredClient * client);
+void gst_deferred_client_free (GstDeferredClient * client);
+void gst_deferred_client_set_caps (GstDeferredClient * client, GstCaps * caps);
+GstCaps * gst_deferred_client_get_caps (GstDeferredClient * client,
+    gboolean * changed, gboolean wait);
+void gst_deferred_client_push_buffer (GstDeferredClient * client,
+    GstBuffer * buf);
+GstBuffer * gst_deferred_client_get_buffer (GstDeferredClient * client);
+
 typedef struct _GstInterSurface GstInterSurface;
 
 struct _GstInterSurface
@@ -46,13 +71,10 @@ struct _GstInterSurface
   guint64 audio_period_time;
 
   /* app */
-  GCond app_caps_cond;
-  GCond app_buffer_cond;
-  GstCaps *app_caps;
+  GstDeferredClient app_client;
 
   GstBuffer *video_buffer;
   GstBuffer *sub_buffer;
-  GstBuffer *app_buffer;
   GstAdapter *audio_adapter;
 };
 

@@ -174,7 +174,6 @@ gst_inter_app_src_start (GstBaseSrc * src)
   GST_DEBUG_OBJECT (interappsrc, "start");
 
   interappsrc->surface = gst_inter_surface_get (interappsrc->channel);
-  interappsrc->got_caps = FALSE;
 
   return TRUE;
 }
@@ -199,47 +198,21 @@ gst_inter_app_src_create (GstBaseSrc * src, guint64 offset, guint size,
   GstInterAppSrc *interappsrc = GST_INTER_APP_SRC (src);
   GstBuffer *buffer = NULL;
   GstCaps *caps = NULL;
+  gboolean changed;
 
   GST_DEBUG_OBJECT (interappsrc, "create");
 
-  g_mutex_lock (&interappsrc->surface->mutex);
+  caps = gst_deferred_client_get_caps (&interappsrc->surface->app_client,
+      &changed, TRUE);
 
-  if (!interappsrc->got_caps && !interappsrc->surface->app_caps) {
-    /* Can't do anything until we have caps */
-    GST_LOG_OBJECT (interappsrc, "waiting for caps");
-    g_cond_wait (&interappsrc->surface->app_caps_cond,
-        &interappsrc->surface->mutex);
-    GST_LOG_OBJECT (interappsrc, "end wait");
-  }
+  buffer = gst_deferred_client_get_buffer (&interappsrc->surface->app_client);
 
-  if (interappsrc->surface->app_caps) {
-    caps = interappsrc->surface->app_caps;
-    interappsrc->surface->app_caps = NULL;
-    interappsrc->got_caps = TRUE;
-  }
-
-  if (!interappsrc->surface->app_buffer) {
-    /* Wait for a buffer */
-    GST_LOG_OBJECT (interappsrc, "waiting for buffer");
-    g_cond_wait (&interappsrc->surface->app_buffer_cond,
-        &interappsrc->surface->mutex);
-    GST_LOG_OBJECT (interappsrc, "end wait");
-  }
-
-  buffer = interappsrc->surface->app_buffer;
-  interappsrc->surface->app_buffer = NULL;
-
-  g_mutex_unlock (&interappsrc->surface->mutex);
-
-  if (caps) {
+  if (changed) {
     GST_DEBUG_OBJECT (interappsrc, "Got caps: %" GST_PTR_FORMAT, caps);
 
     if (!gst_base_src_set_caps (src, caps)) {
       GST_ERROR_OBJECT (interappsrc, "Failed to set caps");
-
       gst_caps_unref (caps);
-      gst_buffer_unref (buffer);
-
       return GST_FLOW_NOT_NEGOTIATED;
     }
 

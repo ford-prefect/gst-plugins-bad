@@ -182,14 +182,7 @@ gst_inter_app_sink_stop (GstBaseSink * sink)
 
   GST_LOG_OBJECT (interappsink, "stop");
 
-  g_mutex_lock (&interappsink->surface->mutex);
-
-  if (interappsink->surface->app_buffer)
-    gst_buffer_unref (interappsink->surface->app_buffer);
-
-  interappsink->surface->app_buffer = NULL;
-
-  g_mutex_unlock (&interappsink->surface->mutex);
+  gst_deferred_client_reset (&interappsink->surface->app_client);
 
   gst_inter_surface_unref (interappsink->surface);
   interappsink->surface = NULL;
@@ -204,15 +197,7 @@ gst_inter_app_sink_set_caps (GstBaseSink * sink, GstCaps * caps)
 
   GST_LOG_OBJECT (interappsink, "set caps");
 
-  g_mutex_lock (&interappsink->surface->mutex);
-
-  if (interappsink->surface->app_caps)
-    gst_caps_unref (interappsink->surface->app_caps);
-
-  interappsink->surface->app_caps = gst_caps_ref (caps);
-
-  g_cond_signal (&interappsink->surface->app_caps_cond);
-  g_mutex_unlock (&interappsink->surface->mutex);
+  gst_deferred_client_set_caps (&interappsink->surface->app_client, caps);
 
   return TRUE;
 }
@@ -224,17 +209,7 @@ gst_inter_app_sink_render (GstBaseSink * sink, GstBuffer * buffer)
 
   GST_LOG_OBJECT (interappsink, "render");
 
-  g_mutex_lock (&interappsink->surface->mutex);
-
-  if (interappsink->surface->app_buffer) {
-    GST_WARNING_OBJECT (interappsink, "Previous buffer was unconsumed");
-    gst_buffer_unref (interappsink->surface->app_buffer);
-  }
-
-  interappsink->surface->app_buffer = gst_buffer_ref (buffer);
-
-  g_cond_signal (&interappsink->surface->app_buffer_cond);
-  g_mutex_unlock (&interappsink->surface->mutex);
+  gst_deferred_client_push_buffer (&interappsink->surface->app_client, buffer);
 
   return GST_FLOW_OK;
 }
