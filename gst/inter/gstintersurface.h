@@ -36,6 +36,7 @@ struct _GstDeferredClient
   gboolean caps_changed;
 
   GstBuffer *buffer;
+  GQueue headers;
 
   GCond caps_cond;
   GCond buffer_cond;
