@@ -205,7 +205,7 @@ gst_inter_test_create_pipeline_vts (GstInterTest * intertest)
   if (!compressed) {
     g_string_append (pipe_desc, "interaudiosink sync=true ");
   } else {
-    g_string_append (pipe_desc, "opusenc bandwidth=fullband ! ");
+    g_string_append (pipe_desc, "vorbisenc ! ");
     g_string_append (pipe_desc, "interappsink channel=audio sync=true ");
   }
 
@@ -253,7 +253,7 @@ gst_inter_test_create_pipeline_server (GstInterTest * intertest)
     g_string_append (pipe_desc, "interaudiosrc ! queue ! ");
   else {
     g_string_append (pipe_desc,
-        "interappsrc channel=audio ! queue ! opusdec ! audioconvert ! ");
+        "interappsrc channel=audio ! queue ! vorbisdec ! audioconvert ! ");
   }
   g_string_append (pipe_desc, "alsasink ");
 
