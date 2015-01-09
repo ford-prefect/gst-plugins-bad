@@ -28,6 +28,11 @@ G_BEGIN_DECLS
 
 typedef struct _GstDeferredClient GstDeferredClient;
 
+typedef enum {
+  GST_DEFERRED_CLIENT_BUFFER_MODE_LATEST,
+  GST_DEFERRED_CLIENT_BUFFER_MODE_LATEST_KEYFRAME,
+} GstDeferredClientBufferMode;
+
 struct _GstDeferredClient
 {
   GMutex mutex;
@@ -35,7 +40,11 @@ struct _GstDeferredClient
   GstCaps *caps;
   gboolean caps_changed;
 
-  GstBuffer *buffer;
+  GstDeferredClientBufferMode buffer_mode;
+  gint max_buffers;
+  gboolean started; /* TRUE if the client has started consuming buffers */
+
+  GQueue buffers;
   GQueue headers;
 
   GCond caps_cond;
