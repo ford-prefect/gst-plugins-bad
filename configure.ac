@@ -481,6 +481,7 @@ AG_GST_CHECK_PLUGIN(rtp)
 AG_GST_CHECK_PLUGIN(sdi)
 AG_GST_CHECK_PLUGIN(sdp)
 AG_GST_CHECK_PLUGIN(segmentclip)
+AG_GST_CHECK_PLUGIN(singledecodebin)
 AG_GST_CHECK_PLUGIN(siren)
 AG_GST_CHECK_PLUGIN(smooth)
 AG_GST_CHECK_PLUGIN(speed)
@@ -3204,6 +3205,7 @@ gst/rtp/Makefile
 gst/sdi/Makefile
 gst/sdp/Makefile
 gst/segmentclip/Makefile
+gst/singledecodebin/Makefile
 gst/siren/Makefile
 gst/smooth/Makefile
 gst/speed/Makefile
