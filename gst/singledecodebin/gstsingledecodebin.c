@@ -29,6 +29,8 @@
 #include "config.h"
 #endif
 
+#include <string.h>
+
 #include "gstsingledecodebin.h"
 
 #define parent_class gst_single_decode_bin_parent_class
@@ -49,6 +51,46 @@ static GstStaticPadTemplate src_template = GST_STATIC_PAD_TEMPLATE ("src",
     GST_STATIC_CAPS ("ANY")
     );
 
+enum
+{
+  PROP_0,
+  PROP_PARSE_ONLY,
+};
+
+#define DEFAULT_PARSE_ONLY FALSE
+
+static void
+gst_single_decode_bin_get_property (GObject * object, guint prop_id,
+    GValue * value, GParamSpec * pspec)
+{
+  GstSingleDecodeBin *sdbin = GST_SINGLE_DECODE_BIN (object);
+
+  switch (prop_id) {
+    case PROP_PARSE_ONLY:
+      g_value_set_boolean (value, sdbin->parse_only);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+  }
+}
+
+static void
+gst_single_decode_bin_set_property (GObject * object, guint prop_id,
+    const GValue * value, GParamSpec * pspec)
+{
+  GstSingleDecodeBin *sdbin = GST_SINGLE_DECODE_BIN (object);
+
+  switch (prop_id) {
+    case PROP_PARSE_ONLY:
+      sdbin->parse_only = g_value_get_boolean (value);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+  }
+}
+
 static void
 dbin_pad_added_cb (GstElement * dbin, GstPad * pad,
     gpointer user_data G_GNUC_UNUSED)
@@ -67,6 +109,28 @@ dbin_pad_added_cb (GstElement * dbin, GstPad * pad,
   gst_object_unref (srcpad);
 
   sdbin->connected = TRUE;
+  sdbin->parse_only = DEFAULT_PARSE_ONLY;
+}
+
+static gboolean
+dbin_autoplug_continue_cb (GstElement * dbin, GstPad * pad, GstCaps * caps,
+    gpointer * user_data)
+{
+  GstSingleDecodeBin *sdbin = GST_SINGLE_DECODE_BIN (user_data);
+  GstStructure *s;
+  gboolean parsed = FALSE;
+
+  if (!sdbin->parse_only)
+    return TRUE;
+
+  /* We will only get fixed caps in autoplug-continue */
+  s = gst_caps_get_structure (caps, 0);
+  if (gst_structure_get_boolean (s, "parsed", &parsed) && parsed) {
+    /* A parser has been plugged in and that's all that we want */
+    return FALSE;
+  }
+
+  return TRUE;
 }
 
 static void
@@ -80,6 +144,8 @@ gst_single_decode_bin_init (GstSingleDecodeBin * sdbin)
 
   g_signal_connect (decodebin, "pad-added", G_CALLBACK (dbin_pad_added_cb),
       NULL);
+  g_signal_connect (decodebin, "autoplug-continue",
+      G_CALLBACK (dbin_autoplug_continue_cb), sdbin);
 
   gst_bin_add (GST_BIN (sdbin), decodebin);
 
@@ -92,12 +158,22 @@ gst_single_decode_bin_init (GstSingleDecodeBin * sdbin)
       gst_ghost_pad_new_no_target ("src", GST_PAD_SRC));
 
   sdbin->connected = FALSE;
+  sdbin->parse_only = FALSE;
 }
 
 static void
 gst_single_decode_bin_class_init (GstSingleDecodeBinClass * sdbin_class)
 {
+  GObjectClass *object_class = G_OBJECT_CLASS (sdbin_class);
   GstElementClass *element_class = GST_ELEMENT_CLASS (sdbin_class);
+
+  object_class->set_property = gst_single_decode_bin_set_property;
+  object_class->get_property = gst_single_decode_bin_get_property;
+
+  g_object_class_install_property (object_class, PROP_PARSE_ONLY,
+      g_param_spec_boolean ("parse-only", "Parse only",
+          "Only parse the given stream", DEFAULT_PARSE_ONLY,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   gst_element_class_set_static_metadata (element_class, "Single Decode Bin",
       "Decoder/Bin", "Decode a single stream",

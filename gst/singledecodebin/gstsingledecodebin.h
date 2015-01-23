@@ -24,7 +24,9 @@ G_BEGIN_DECLS
 
 typedef struct {
   GstBin parent;
+
   gboolean connected;
+  gboolean parse_only;
 } GstSingleDecodeBin;
 
 typedef struct {
