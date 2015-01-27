@@ -59,12 +59,84 @@ static GstStaticPadTemplate src_factory = GST_STATIC_PAD_TEMPLATE ("src",
 G_DEFINE_TYPE_WITH_CODE (GstOpenSLESSrc, gst_opensles_src,
     GST_TYPE_AUDIO_BASE_SRC, _do_init);
 
+enum
+{
+  PROP_0,
+  PROP_PRESET,
+};
+
+#define DEFAULT_PRESET GST_OPENSLES_RECORDING_PRESET_NONE
+
+GType
+gst_opensles_recording_preset_get_type (void)
+{
+  static const GEnumValue values[] = {
+    {GST_OPENSLES_RECORDING_PRESET_NONE,
+        "GST_OPENSLES_RECORDING_PRESET_NONE", "none"},
+    {GST_OPENSLES_RECORDING_PRESET_GENERIC,
+        "GST_OPENSLES_RECORDING_PRESET_GENERIC", "generic"},
+    {GST_OPENSLES_RECORDING_PRESET_CAMCORDER,
+        "GST_OPENSLES_RECORDING_PRESET_CAMCORDER", "camcorder"},
+    {GST_OPENSLES_RECORDING_PRESET_VOICE_RECOGNITION,
+        "GST_OPENSLES_RECORDING_PRESET_VOICE_RECOGNITION", "voice-recognition"},
+    {GST_OPENSLES_RECORDING_PRESET_VOICE_COMMUNICATION,
+          "GST_OPENSLES_RECORDING_PRESET_VOICE_COMMUNICATION",
+        "voice-communication"},
+    {0, NULL, NULL}
+  };
+  static volatile GType id = 0;
+
+  if (g_once_init_enter ((gsize *) & id)) {
+    GType _id;
+
+    _id = g_enum_register_static ("GstOpenSLESRecordingPreset", values);
+
+    g_once_init_leave ((gsize *) & id, _id);
+  }
+
+  return id;
+}
+
+
+static void
+gst_opensles_src_set_property (GObject * object, guint prop_id,
+    const GValue * value, GParamSpec * pspec)
+{
+  GstOpenSLESSrc *src = GST_OPENSLES_SRC (object);
+
+  switch (prop_id) {
+    case PROP_PRESET:
+      src->preset = g_value_get_enum (value);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+  }
+}
+
+static void
+gst_opensles_src_get_property (GObject * object, guint prop_id,
+    GValue * value, GParamSpec * pspec)
+{
+  GstOpenSLESSrc *src = GST_OPENSLES_SRC (object);
+
+  switch (prop_id) {
+    case PROP_PRESET:
+      g_value_set_enum (value, src->preset);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+  }
+}
+
 static GstAudioRingBuffer *
 gst_opensles_src_create_ringbuffer (GstAudioBaseSrc * base)
 {
   GstAudioRingBuffer *rb;
 
   rb = gst_opensles_ringbuffer_new (RB_MODE_SRC);
+  GST_OPENSLES_RING_BUFFER (rb)->preset = GST_OPENSLES_SRC (base)->preset;
 
   return rb;
 }
@@ -72,11 +144,21 @@ gst_opensles_src_create_ringbuffer (GstAudioBaseSrc * base)
 static void
 gst_opensles_src_class_init (GstOpenSLESSrcClass * klass)
 {
+  GObjectClass *gobject_class;
   GstElementClass *gstelement_class;
   GstAudioBaseSrcClass *gstaudiobasesrc_class;
 
+  gobject_class = (GObjectClass *) klass;
   gstelement_class = (GstElementClass *) klass;
   gstaudiobasesrc_class = (GstAudioBaseSrcClass *) klass;
+
+  gobject_class->set_property = gst_opensles_src_set_property;
+  gobject_class->get_property = gst_opensles_src_get_property;
+
+  g_object_class_install_property (gobject_class, PROP_PRESET,
+      g_param_spec_enum ("preset", "Preset", "Recording preset to use",
+          GST_TYPE_OPENSLES_RECORDING_PRESET, DEFAULT_PRESET,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   gst_element_class_add_pad_template (gstelement_class,
       gst_static_pad_template_get (&src_factory));
@@ -97,4 +179,6 @@ gst_opensles_src_init (GstOpenSLESSrc * src)
    * processing 20ms buffers as minimum buffer size. */
   GST_AUDIO_BASE_SRC (src)->buffer_time = 200000;
   GST_AUDIO_BASE_SRC (src)->latency_time = 20000;
+
+  src->preset = DEFAULT_PRESET;
 }
