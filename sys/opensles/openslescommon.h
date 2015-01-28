@@ -45,6 +45,21 @@ typedef enum {
 
 GType gst_opensles_recording_preset_get_type (void);
 
+typedef enum {
+  GST_OPENSLES_STREAM_TYPE_VOICE = SL_ANDROID_STREAM_VOICE,
+  GST_OPENSLES_STREAM_TYPE_SYSTEM = SL_ANDROID_STREAM_SYSTEM,
+  GST_OPENSLES_STREAM_TYPE_RING = SL_ANDROID_STREAM_RING,
+  GST_OPENSLES_STREAM_TYPE_MEDIA = SL_ANDROID_STREAM_MEDIA,
+  GST_OPENSLES_STREAM_TYPE_ALARM = SL_ANDROID_STREAM_ALARM,
+  GST_OPENSLES_STREAM_TYPE_NOTIFICATION = SL_ANDROID_STREAM_NOTIFICATION,
+  GST_OPENSLES_STREAM_TYPE_NONE = -1, /* If we don't want to set a type */
+} GstOpenSLESStreamType;
+
+#define GST_TYPE_OPENSLES_STREAM_TYPE \
+  (gst_opensles_stream_type_get_type())
+
+GType gst_opensles_stream_type_get_type (void);
+
 G_END_DECLS
 
 #endif /* __OPENSLESCOMMON_H__ */
