@@ -1894,6 +1894,12 @@ AG_GST_CHECK_FEATURE(NVENC, [NVIDIA Encode API], nvenc, [
 ])
 AM_CONDITIONAL(USE_NVENC_GST_GL, test "x$USE_NVENC_GST_GL" = "xyes")
 
+dnl check for tinyalsa
+translit(dnm, m, l) AM_CONDITIONAL(USE_TINYALSA, true)
+AG_GST_CHECK_FEATURE(TINYALSA, [tinyalsa], tinyalsa, [
+  AC_CHECK_HEADER(tinyalsa/asoundlib.h, HAVE_TINYALSA="yes", HAVE_TINYALSA="no")
+])
+
 dnl *** ext plug-ins ***
 dnl keep this list sorted alphabetically !
 
@@ -3591,6 +3597,7 @@ sys/linsys/Makefile
 sys/nvenc/Makefile
 sys/opensles/Makefile
 sys/shm/Makefile
+sys/tinyalsa/Makefile
 sys/uvch264/Makefile
 sys/vcd/Makefile
 sys/vdpau/Makefile
